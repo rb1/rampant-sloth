@@ -6,6 +6,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Collections.Immutable;
+using System.Diagnostics.Tracing;
 using System.Linq;
 using System.Text;
 using VRage;
@@ -22,51 +23,103 @@ namespace IngameScript
 {
     public partial class Program : MyGridProgram
     {
-        // This file contains your actual script.
-        //
-        // You can either keep all your code here, or you can create separate
-        // code files to make your program easier to navigate while coding.
-        //
-        // Go to:
-        // https://github.com/malware-dev/MDK-SE/wiki/Quick-Introduction-to-Space-Engineers-Ingame-Scripts
-        //
-        // to learn more about ingame scripts.
+        static readonly string RECALL_ORDER = "RTB";
+        static readonly string LAUNCH_ORDER = "GO";
+        
+        static readonly string STATUS_REPORTING_CHANNEL = "Home carrier drone status";
+
+        readonly IMyBroadcastListener m_statusListener;
+        readonly Dictionary<string, Drone> m_drones;
 
         public Program()
         {
-            // The constructor, called only once every session and
-            // always before any other method is called. Use it to
-            // initialize your script. 
-            //     
-            // The constructor is optional and can be removed if not
-            // needed.
-            // 
-            // It's recommended to set Runtime.UpdateFrequency 
-            // here, which will allow your script to run itself without a 
-            // timer block.
-        }
-
-        public void Save()
-        {
-            // Called when the program needs to save its state. Use
-            // this method to save your state to the Storage field
-            // or some other means. 
-            // 
-            // This method is optional and can be removed if not
-            // needed.
+            Runtime.UpdateFrequency = UpdateFrequency.Update10;
+            m_statusListener = IGC.RegisterBroadcastListener(STATUS_REPORTING_CHANNEL);
+            m_drones = new Dictionary<string, Drone>();
         }
 
         public void Main(string argument, UpdateType updateSource)
         {
-            // The main entry point of the script, invoked every time
-            // one of the programmable block's Run actions are invoked,
-            // or the script updates itself. The updateSource argument
-            // describes where the update came from. Be aware that the
-            // updateSource is a  bitfield  and might contain more than 
-            // one update type.
-            // 
-            // The method itself is required, but the arguments above
-            // can be removed if not needed.
+            while(m_statusListener.HasPendingMessage)
+            {
+                var message = m_statusListener.AcceptMessage().As<String>();
+                HandleStatusUpdate(message);
+            }
+            if(argument.StartsWith(RECALL_ORDER))
+            {
+                SendRecallOrder(argument.Substring(RECALL_ORDER.Length + 1));
+
+            }
+            else if(argument.StartsWith(LAUNCH_ORDER))
+            {
+                SendLaunchOrder(argument.Substring(LAUNCH_ORDER.Length + 1));
+            }
         }
+
+        void SendLaunchOrder(string droneName)
+        {
+            IGC.SendBroadcastMessage(m_drones[droneName].OrdersChannel, LAUNCH_ORDER);
+        }
+
+        void SendRecallOrder(string droneName)
+        {
+            IGC.SendBroadcastMessage(m_drones[droneName].OrdersChannel, RECALL_ORDER);
+        }
+
+        void HandleStatusUpdate(string updateMessage)
+        {
+            var status = new DroneStatus(updateMessage);
+            if(m_drones.ContainsKey(status.DroneName) == false)
+            {
+                HandleNewDrone(status);
+            }
+            m_drones[status.DroneName].LastStatus = status;
+        }
+        void HandleNewDrone(DroneStatus status)
+        {
+            //TODO Find output surface
+            m_drones[status.DroneName] = new Drone(status, null);
+            Echo("Registered new drone: " + status.DroneName);
+        }
+    }
+
+    class Drone
+    {
+        static readonly string ORDERS_CHANNEL_FMT_STR = "{0} orders";
+        public Drone(DroneStatus status, IMyTextSurface outputSurface)
+        {
+            LastStatus = status;
+            OrdersChannel = string.Format(ORDERS_CHANNEL_FMT_STR, status.DroneName);
+        }
+        public DroneStatus LastStatus;
+        public readonly IMyTextSurface OutputSurface;
+        public readonly string OrdersChannel;
+    }
+
+    class DroneStatus
+    {
+        public DroneStatus(string statusStr)
+        {
+            var parts = statusStr.Split(',');
+            DroneName = parts[DroneNameIndex];
+            FlightStatus = parts[FlightStatusIndex];
+            IsDamaged = bool.Parse(parts[IsDamagedIndex]);
+            FuelLevel = float.Parse(parts[FuelLevelIndex]);
+            BatteryLevel = float.Parse(parts[BatteryLevelIndex]);
+            MagazineLevel = float.Parse(parts[MagazineLevelIndex]);
+        }
+        static readonly int DroneNameIndex = 0;
+        public readonly string DroneName;
+        public readonly int FlightStatusIndex = 1;
+        public readonly string FlightStatus;
+        public readonly int IsDamagedIndex = 2;
+        public readonly bool IsDamaged;
+        public readonly int FuelLevelIndex = 3;
+        public readonly float FuelLevel;
+        public readonly int BatteryLevelIndex = 4;
+        public readonly float BatteryLevel;
+        public readonly int MagazineLevelIndex = 5;
+        public readonly float MagazineLevel;
+
     }
 }
