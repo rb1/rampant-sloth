@@ -64,3 +64,6 @@ Desktop.ini
 
 # Recycle Bin used on file shares
 $RECYCLE.BIN/
+
+#Mdk2 local settings
+*.mdk.local.ini
