@@ -108,6 +108,7 @@ readonly IMyBroadcastListener m_ordersListener;
                         {
                             m_launchThrusters.Add(block as IMyThrust);
                         }
+                        m_allThrusters.Add(block as IMyThrust);
                     }
                     else if(block is IMyGasTank && block.DetailedInfo.Contains("Hydrogen"))
                     {
