@@ -38,7 +38,6 @@ namespace IngameScript
         static readonly string DRONE_NAME = "Peashooter 1";
         static readonly string OLD_DRONE_NAME = DRONE_NAME;
         static readonly string AMMO_STORAGE_TAG = "[Ammo]";
-        static readonly string RECALL_TIMER_TAG = "[Recall]";
         static readonly string LAUNCH_TAG = "[Launch]";
         static readonly string DOCKING_TAG = "[Dock]";
         static readonly string STATUS_REPORTING_CHANNEL = "Home carrier drone status";
@@ -63,7 +62,6 @@ readonly IMyBroadcastListener m_ordersListener;
         readonly List<IMyGasTank> m_fuelTanks = new List<IMyGasTank>(3);
         readonly List<IMyBatteryBlock> m_batteries = new List<IMyBatteryBlock>(2);
         
-        readonly IMyTimerBlock m_recallTimerBlock;
         readonly IMyShipConnector m_dockingConnector;
         readonly IMyFlightMovementBlock m_AIMoveBlock;
         readonly IMyBasicMissionBlock m_AIBasicWanderBlock;
@@ -92,11 +90,7 @@ readonly IMyBroadcastListener m_ordersListener;
                 {
                     RenameBlock(block);
                     m_droneBlocks.Add(block);
-                    if (block is IMyTimerBlock && block.CustomData.Contains(RECALL_TIMER_TAG))
-                    {
-                        m_recallTimerBlock = block as IMyTimerBlock;
-                    }
-                    else if (block is IMyCargoContainer && block.CustomData.Contains(AMMO_STORAGE_TAG))
+                    if (block is IMyCargoContainer && block.CustomData.Contains(AMMO_STORAGE_TAG))
                     {
                         m_cargoContainers.Add(block as IMyCargoContainer);
                         block.ShowInTerminal = false;
@@ -220,11 +214,6 @@ readonly IMyBroadcastListener m_ordersListener;
                 {
                     Echo("Docking Connector NOT FOUND");
                 }
-                if(m_recallTimerBlock == null)
-                {
-                    Echo("Recall Timer NOT FOUND");
-                }
-                
             }
         }
         public void Main(string argument, UpdateType updateSource)
@@ -283,11 +272,6 @@ readonly IMyBroadcastListener m_ordersListener;
         void TriggerRecall()
         {
             m_recallTriggered = true;
-            if(m_recallTimerBlock != null)
-            {
-                m_recallTimerBlock.Trigger();
-                return;
-            }
             ResetThrusterOverrides();
             HandOverToRecallAI();
         }
