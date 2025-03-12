@@ -41,6 +41,7 @@ namespace IngameScript
         static readonly string LAUNCH_TAG = "[Launch]";
         static readonly string DOCKING_TAG = "[Dock]";
         static readonly string STATUS_REPORTING_CHANNEL = "Home carrier drone status";
+        //static readonly string DEBUG_CHANNEL = "Drone Debug";
         static readonly string ORDERS_CHANNEL = DRONE_NAME + " orders";
         static readonly float LOW_FUEL_PERCENT = .30f;
         static readonly float HIGH_FUEL_PERCENT = .99f;
@@ -78,6 +79,9 @@ readonly IMyBroadcastListener m_ordersListener;
             AS_YOU_WERE,
             CAN_LAUNCH
         }
+
+        readonly string m_errorMessage = null;
+
         public Program()
         {
 
@@ -136,7 +140,15 @@ readonly IMyBroadcastListener m_ordersListener;
                 }
             }
             m_ordersListener = IGC.RegisterBroadcastListener(ORDERS_CHANNEL);
-            m_readyToLaunch = DoStatusReporting() == StatusReportAction.CAN_LAUNCH && m_dockingConnector.IsConnected;
+            m_errorMessage = ValidateBlocks();
+            if(m_errorMessage == null)
+                m_readyToLaunch = DoStatusReporting() == StatusReportAction.CAN_LAUNCH && m_dockingConnector.IsConnected;
+            
+        }
+
+        string ValidateBlocks()
+        {
+            return null;
         }
 
         private void LoadFromStorage()
@@ -195,6 +207,7 @@ readonly IMyBroadcastListener m_ordersListener;
             while(m_ordersListener.HasPendingMessage)
             {
                 var msg = m_ordersListener.AcceptMessage().As<string>();
+                Echo("Got Message: " + msg);
                 if(msg == RECALL_ORDER)
                     m_recallOrderReceived = true;
                 else if(msg == LAUNCH_ORDER)
@@ -221,6 +234,14 @@ readonly IMyBroadcastListener m_ordersListener;
         {
             if(string.IsNullOrWhiteSpace(argument) == false && argument.StartsWith("dd"))
                 DumpDebug(argument.Substring(2).Trim());
+            if(m_errorMessage != null)
+            {
+                Echo("Errors Detected:");
+                Echo(m_errorMessage);
+                Echo("Recompile to fix");
+                return;
+            }
+
             var statusReportAction = DoStatusReporting();
             CheckForOrders();
             if(m_dockingConnector.IsConnected == false)
@@ -232,11 +253,7 @@ readonly IMyBroadcastListener m_ordersListener;
                 }
                 else
                 {
-                    if(m_recallTriggered == false && m_recallOrderReceived)
-                    {
-                        TriggerRecall();
-                    }
-                    if(statusReportAction == StatusReportAction.RECALL && m_recallTriggered == false)
+                    if(ShouldTriggerRecall(statusReportAction))
                     {
                         TriggerRecall();
                     }
@@ -261,6 +278,13 @@ readonly IMyBroadcastListener m_ordersListener;
                 }
             }
         }
+
+        bool ShouldTriggerRecall(StatusReportAction statusReportAction)
+        {
+            //if we're note already recalling and we have got an order to recall or the ship status demands it, then we should.
+            return m_recallTriggered == false && (m_recallOrderReceived || statusReportAction == StatusReportAction.RECALL);
+        }
+
         void TriggerLaunch()
         {
             m_ticksSinceLaunch = 0;
@@ -421,34 +445,13 @@ readonly IMyBroadcastListener m_ordersListener;
                 return true;
             return false;
         }
-        bool CanLaunch(bool isDamaged, double fuelLevel, float batteryLevel, float ammoLevel)
+        static bool CanLaunch(bool isDamaged, double fuelLevel, float batteryLevel, float ammoLevel)
         {
             if(isDamaged == false && fuelLevel >= HIGH_FUEL_PERCENT && batteryLevel >= HIGH_BATTERY_PERCENT && ammoLevel <= HIGH_AMMO_PERCENT)
                 return true;
             return false;
         }
 
-        float GetBatteryLevel()
-        {
-            float totalMax = 0;
-            float totalStored = 0;
-            foreach(var battery in m_batteries)
-            {
-                totalMax += battery.MaxStoredPower;
-                totalStored += battery.CurrentStoredPower;
-            }
-            return totalStored/totalMax;
-        }
-
-        float GetAmmoLevel()
-        {
-            float totalVolumeFillFactors = 0;
-            foreach(var container in m_cargoContainers)
-            {
-                totalVolumeFillFactors += container.GetInventory().VolumeFillFactor;
-            }
-            return totalVolumeFillFactors/m_cargoContainers.Count;
-        }
 
         enum FlightStatus
         {
@@ -501,6 +504,28 @@ readonly IMyBroadcastListener m_ordersListener;
                 total += tank.FilledRatio;
             }
             return total / m_fuelTanks.Count;
+        }
+        
+        float GetBatteryLevel()
+        {
+            float totalMax = 0;
+            float totalStored = 0;
+            foreach(var battery in m_batteries)
+            {
+                totalMax += battery.MaxStoredPower;
+                totalStored += battery.CurrentStoredPower;
+            }
+            return totalStored/totalMax;
+        }
+
+        float GetAmmoLevel()
+        {
+            float totalVolumeFillFactors = 0;
+            foreach(var container in m_cargoContainers)
+            {
+                totalVolumeFillFactors += container.GetInventory().VolumeFillFactor;
+            }
+            return totalVolumeFillFactors/m_cargoContainers.Count;
         }
     }
 }
