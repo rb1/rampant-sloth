@@ -169,7 +169,7 @@ readonly IMyBroadcastListener m_ordersListener;
             {
                 if(block.CustomName.StartsWith(DRONE_NAME) == false)
                 {
-                    block.CustomName = DRONE_NAME + block.DisplayNameText;
+                    block.CustomName = DRONE_NAME + " " + block.DisplayNameText;
                 }
             }
             else
@@ -180,7 +180,7 @@ readonly IMyBroadcastListener m_ordersListener;
                 }
                 else if(block.CustomName.StartsWith(DRONE_NAME) == false)
                 {
-                    block.CustomName = DRONE_NAME + block.DisplayNameText;
+                    block.CustomName = DRONE_NAME + " " + block.DisplayNameText;
                 }
             }
         }
