@@ -281,6 +281,7 @@ readonly IMyBroadcastListener m_ordersListener;
 
         void TriggerRecall()
         {
+            m_recallTriggered = true;
             if(m_recallTimerBlock != null)
             {
                 m_recallTimerBlock.Trigger();
