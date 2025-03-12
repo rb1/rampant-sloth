@@ -152,7 +152,7 @@ readonly IMyBroadcastListener m_ordersListener;
                 return;
             }
 
-            var values = Storage.Split('\n');
+            var values = Storage.Split(',');
             if(values.Length < 2)
             {
                 Echo("Unexpected value from storage: " + Storage);
