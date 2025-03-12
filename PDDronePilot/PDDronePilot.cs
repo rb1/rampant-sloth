@@ -55,18 +55,19 @@ namespace IngameScript
 
 readonly IMyBroadcastListener m_ordersListener;
 
-        readonly List<IMyCargoContainer> m_cargoContainers = new List<IMyCargoContainer>(5);
-        readonly List<IMyTerminalBlock> m_droneBlocks = new List<IMyTerminalBlock>(20);
-        readonly List<IMyThrust> m_launchThrusters = new List<IMyThrust>(3);
-        readonly List<IMyThrust> m_allThrusters = new List<IMyThrust>(12);
-        readonly List<IMyGasTank> m_fuelTanks = new List<IMyGasTank>(3);
-        readonly List<IMyBatteryBlock> m_batteries = new List<IMyBatteryBlock>(2);
+        readonly List<IMyCargoContainer> m_cargoContainers = new List<IMyCargoContainer>(5); //Containers tagged with [Ammo]
+        readonly List<IMyTerminalBlock> m_droneBlocks = new List<IMyTerminalBlock>(20); //All the terminal blocks on this drone
+        readonly List<IMyThrust> m_launchThrusters = new List<IMyThrust>(3); //Thrusters tagged with [Launch], used to reverse out from the docking bay.
+        readonly List<IMyThrust> m_allThrusters = new List<IMyThrust>(12); //All thrusters on this drone
+        readonly List<IMyGasTank> m_fuelTanks = new List<IMyGasTank>(); // All Hydrogen fuel tanks on this drone
+        readonly List<IMyBatteryBlock> m_batteries = new List<IMyBatteryBlock>(2); // All batteries on this drone
         
-        readonly IMyShipConnector m_dockingConnector;
+        readonly IMyShipConnector m_dockingConnector; // The first connector tagged with [Dock]
         readonly IMyFlightMovementBlock m_AIMoveBlock;
         readonly IMyBasicMissionBlock m_AIBasicWanderBlock;
         readonly IMyDefensiveCombatBlock m_AIDefenseBlock;
-        readonly IMyPathRecorderBlock m_AIDockingPathRecorderBlock;
+        readonly IMyPathRecorderBlock m_AIDockingPathRecorderBlock; //This block should navigate to the docking connector and then trigger this script with the argument [Dock]
+
 
         bool m_readyToLaunch = false;
         bool m_recallTriggered = false;
