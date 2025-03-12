@@ -148,6 +148,8 @@ readonly IMyBroadcastListener m_ordersListener;
 
         string ValidateBlocks()
         {
+            if(m_launchThrusters.Count == 0)
+                return string.Format("No launch thrusters found. Add {0} to a thruster block that flies your craft away from the docking port.", LAUNCH_TAG);
             return null;
         }
 
@@ -498,6 +500,8 @@ readonly IMyBroadcastListener m_ordersListener;
 
         double GetFuelLevel()
         {
+            if(m_fuelTanks.Count == 0)
+                return 1;
             double total = 0;
             foreach(var tank in m_fuelTanks)
             {
@@ -508,6 +512,8 @@ readonly IMyBroadcastListener m_ordersListener;
         
         float GetBatteryLevel()
         {
+            if(m_fuelTanks.Count == 0)
+                return 1;
             float totalMax = 0;
             float totalStored = 0;
             foreach(var battery in m_batteries)
@@ -520,6 +526,8 @@ readonly IMyBroadcastListener m_ordersListener;
 
         float GetAmmoLevel()
         {
+            if(m_cargoContainers.Count == 0)
+                return 1;
             float totalVolumeFillFactors = 0;
             foreach(var container in m_cargoContainers)
             {
