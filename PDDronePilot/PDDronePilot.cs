@@ -150,6 +150,12 @@ readonly IMyBroadcastListener m_ordersListener;
         {
             if(m_launchThrusters.Count == 0)
                 return string.Format("No launch thrusters found. Add {0} to a thruster block that flies your craft away from the docking port.", LAUNCH_TAG);
+            if(m_dockingConnector == null)
+                return string.Format("No docking connector found. Add {0} to the connector that should be locked when the drone is positioned for docking.", DOCKING_TAG);
+            if(m_AIMoveBlock == null)
+                return "No AI Flight (Move) block found. Please add one to the drone.";
+            if(m_AIDockingPathRecorderBlock == null)
+                return "No AI Recorder (Task) block found. Please add one to the drone and record a path for docking approach.";
             return null;
         }
 
@@ -202,7 +208,7 @@ readonly IMyBroadcastListener m_ordersListener;
 
         bool m_recallOrderReceived = false;
         bool m_launchOrderReceived = false;
-        void CheckForOrders()
+        void CheckForOrders(string args)
         {
             m_recallOrderReceived = false;
             m_launchOrderReceived = false;
@@ -215,6 +221,10 @@ readonly IMyBroadcastListener m_ordersListener;
                 else if(msg == LAUNCH_ORDER)
                     m_launchOrderReceived = true;
             }
+            if(m_recallOrderReceived == false && args.Contains("Recall"))
+                m_recallOrderReceived = true;
+            if(m_launchOrderReceived == false && args.Contains("Launch"))
+                m_launchOrderReceived = true;
         }
         void DumpDebug(string command)
         {
@@ -245,7 +255,7 @@ readonly IMyBroadcastListener m_ordersListener;
             }
 
             var statusReportAction = DoStatusReporting();
-            CheckForOrders();
+            CheckForOrders(argument);
             if(m_dockingConnector.IsConnected == false)
             {
                 m_launchOrderReceived = false;
