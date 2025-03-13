@@ -11,8 +11,6 @@ Project("{97236952-349A-40DC-9176-0F4148CBDE0F}") = "IngotInventoryManager", "In
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BaseStatusPanels", "BaseStatusPanels\BaseStatusPanels.csproj", "{3C781BAF-1F11-4281-99A9-C5DCC6E88D29}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MarauderPanels", "MarauderPanels\MarauderPanels.csproj", "{24D91C38-EC0B-433C-8743-72936360FC9F}"
-EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MiniCannonTurret", "MiniCannonTurret\MiniCannonTurret.csproj", "{84E5C795-9F6E-4148-9ADA-8C8F35162391}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RenameBlocks", "RenameBlocks\RenameBlocks.csproj", "{04C8D9C5-6DFF-4431-8A81-44BE36513C47}"
@@ -47,10 +45,6 @@ Global
 		{3C781BAF-1F11-4281-99A9-C5DCC6E88D29}.Debug|Any CPU.Build.0 = Debug|x64
 		{3C781BAF-1F11-4281-99A9-C5DCC6E88D29}.Release|Any CPU.ActiveCfg = Release|x64
 		{3C781BAF-1F11-4281-99A9-C5DCC6E88D29}.Release|Any CPU.Build.0 = Release|x64
-		{24D91C38-EC0B-433C-8743-72936360FC9F}.Debug|Any CPU.ActiveCfg = Debug|x64
-		{24D91C38-EC0B-433C-8743-72936360FC9F}.Debug|Any CPU.Build.0 = Debug|x64
-		{24D91C38-EC0B-433C-8743-72936360FC9F}.Release|Any CPU.ActiveCfg = Release|x64
-		{24D91C38-EC0B-433C-8743-72936360FC9F}.Release|Any CPU.Build.0 = Release|x64
 		{84E5C795-9F6E-4148-9ADA-8C8F35162391}.Debug|Any CPU.ActiveCfg = Debug|x64
 		{84E5C795-9F6E-4148-9ADA-8C8F35162391}.Debug|Any CPU.Build.0 = Debug|x64
 		{84E5C795-9F6E-4148-9ADA-8C8F35162391}.Release|Any CPU.ActiveCfg = Release|x64
