@@ -140,6 +140,7 @@ readonly IMyBroadcastListener m_ordersListener;
                 }
             }
             m_ordersListener = IGC.RegisterBroadcastListener(ORDERS_CHANNEL);
+            Me.CubeGrid.CustomName = DRONE_NAME;
             m_errorMessage = ValidateBlocks();
             if(m_errorMessage == null)
                 m_readyToLaunch = DoStatusReporting() == StatusReportAction.CAN_LAUNCH && m_dockingConnector.IsConnected;
