@@ -377,22 +377,20 @@ readonly IMyBroadcastListener m_ordersListener;
                 m_ticksSinceLaunch = int.MinValue;
             }
         }
+
         void HandOverToRecallAI()
         {
+            m_AIBasicWanderBlock.SetValueBool("ActivateBehavior", false);
+            m_AIDefenseBlock.SetValueBool("ActivateBehavior", false);
+
+            m_AIMoveBlock.Enabled = true;
             m_AIMoveBlock.CollisionAvoidance = true;
             m_AIMoveBlock.PrecisionMode = false;
-            m_AIMoveBlock.Enabled = true;
-            m_AIMoveBlock.ApplyAction("ActivateBehavior_On");
-            
-            m_AIDefenseBlock.Enabled = false;
-            m_AIDefenseBlock.ApplyAction("ActivateBehavior_Off");
+            m_AIMoveBlock.SetValueBool("ActivateBehavior", true);
             
             m_AIDockingPathRecorderBlock.Enabled = true;
-            m_AIDockingPathRecorderBlock.ApplyAction("ActivateBehavior_On");
+            m_AIDockingPathRecorderBlock.SetValueBool("ActivateBehavior", true);
             m_AIDockingPathRecorderBlock.SetValueBool("ID_PLAY_CHECKBOX", true);
-
-            m_AIBasicWanderBlock.Enabled = false;
-            m_AIBasicWanderBlock.ApplyAction("ActivateBehavior_Off");
         }
         void HandOverToAIBlocks()
         {
