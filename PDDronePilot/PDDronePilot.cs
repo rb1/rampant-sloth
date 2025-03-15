@@ -50,6 +50,7 @@ namespace IngameScript
         static readonly float LOW_AMMO_PERCENT = .0f;
         static readonly float HIGH_AMMO_PERCENT = .80f;
         static readonly int LAUNCH_TIME_IN_TICKS = 18;
+        static readonly int  MAX_DOCKING_TICKS = 10;
         static readonly float LAUNCH_THRUST_OVERRIDE = .8f;
         static readonly string RECALL_ORDER = "RTB";
         static readonly string LAUNCH_ORDER = "GO";
@@ -73,6 +74,7 @@ readonly IMyBroadcastListener m_ordersListener;
         bool m_readyToLaunch = false;
         bool m_recallTriggered = false;
         int m_ticksSinceLaunch = int.MinValue;
+        int m_dockingTicks = int.MinValue;
         enum StatusReportAction
         {
             RECALL,
@@ -169,7 +171,7 @@ readonly IMyBroadcastListener m_ordersListener;
             }
 
             var values = Storage.Split(',');
-            if(values.Length < 2)
+            if(values.Length < 3)
             {
                 Echo("Unexpected value from storage: " + Storage);
                 Save();
@@ -177,6 +179,7 @@ readonly IMyBroadcastListener m_ordersListener;
             }
             m_recallTriggered = values[0].Length > 0;
             m_ticksSinceLaunch = int.Parse(values[1]);
+            m_dockingTicks = int.Parse(values[2]);
         }
 
         private void RenameBlock(IMyTerminalBlock block)
@@ -205,6 +208,7 @@ readonly IMyBroadcastListener m_ordersListener;
         {
             Storage = m_recallTriggered ? "1" : "";
             Storage += string.Format(",{0}", m_ticksSinceLaunch);
+            Storage += string.Format(",{0}", m_dockingTicks);
         }
 
         bool m_recallOrderReceived = false;
@@ -254,7 +258,10 @@ readonly IMyBroadcastListener m_ordersListener;
                 Echo("Recompile to fix");
                 return;
             }
-
+            if(argument.Contains(DOCKING_TAG))
+            {
+                m_dockingTicks = 0;
+            }
             var statusReportAction = DoStatusReporting();
             CheckForOrders(argument);
             if(m_dockingConnector.IsConnected == false)
@@ -263,6 +270,20 @@ readonly IMyBroadcastListener m_ordersListener;
                 if(LaunchIsInProgress())
                 {
                     ContinueLaunch();
+                }
+                else if(m_dockingTicks >= 0)
+                {
+                    if(m_dockingTicks > MAX_DOCKING_TICKS)
+                    {
+                        Echo("Failed to dock");
+                        m_dockingTicks = int.MinValue;
+                        return;
+                    }
+                    if(m_dockingConnector.Status == MyShipConnectorStatus.Connectable)
+                    {
+                        m_dockingConnector.Connect();
+                    }
+                    m_dockingTicks++;
                 }
                 else
                 {
@@ -280,6 +301,7 @@ readonly IMyBroadcastListener m_ordersListener;
                     SetFuelTankStockpile(true);
                     TurnOffThrusters();
                     TurnOffAIBlocks();
+                    m_dockingTicks = int.MinValue;
                     m_recallTriggered = false;
                 }
                 
@@ -394,26 +416,25 @@ readonly IMyBroadcastListener m_ordersListener;
         }
         void HandOverToAIBlocks()
         {
+            m_AIDockingPathRecorderBlock.SetValueBool("ActivateBehavior", false);
+
+            m_AIMoveBlock.Enabled = true;
             m_AIMoveBlock.CollisionAvoidance = true;
             m_AIMoveBlock.PrecisionMode = false;
-            m_AIMoveBlock.Enabled = true;
-            m_AIMoveBlock.ApplyAction("ActivateBehavior_On");
+            m_AIMoveBlock.SetValueBool("ActivateBehavior", true);
             
             m_AIDefenseBlock.Enabled = true;
-            m_AIDefenseBlock.ApplyAction("ActivateBehavior_On");
-            
-            m_AIDockingPathRecorderBlock.Enabled = false;
-            m_AIDockingPathRecorderBlock.ApplyAction("ActivateBehavior_Off");
+            m_AIDefenseBlock.SetValueBool("ActivateBehavior", true);
 
             m_AIBasicWanderBlock.Enabled = true;
-            m_AIBasicWanderBlock.ApplyAction("ActivateBehavior_On");
+            m_AIBasicWanderBlock.SetValueBool("ActivateBehavior", true);
         }
         void TurnOffAIBlocks()
         {
-            m_AIMoveBlock.ApplyAction("ActivateBehavior_Off");
-            m_AIDefenseBlock.ApplyAction("ActivateBehavior_Off");
-            m_AIDockingPathRecorderBlock.ApplyAction("ActivateBehavior_Off");
-            m_AIBasicWanderBlock.ApplyAction("ActivateBehavior_Off");
+            m_AIMoveBlock.SetValueBool("ActivateBehavior", false);
+            m_AIDefenseBlock.SetValueBool("ActivateBehavior", false);
+            m_AIDockingPathRecorderBlock.SetValueBool("ActivateBehavior", false);
+            m_AIBasicWanderBlock.SetValueBool("ActivateBehavior", false);
 
         }
         void EnableWeaponsSystems()
@@ -470,7 +491,8 @@ readonly IMyBroadcastListener m_ordersListener;
             DOCKED_READY,
             LAUNCHING,
             CRUISING,
-            RETURNING
+            RETURNING,
+            DOCKING,
         }
 
         FlightStatus GetFlightStatus(StatusReportAction statusAction)
@@ -482,7 +504,13 @@ readonly IMyBroadcastListener m_ordersListener;
                 return FlightStatus.DOCKED_R;
             }
             if(LaunchIsInProgress()) return FlightStatus.LAUNCHING;
-            if(m_recallTriggered) return FlightStatus.RETURNING;
+            
+            if(m_recallTriggered)
+            {
+                if(m_dockingTicks >= 0)
+                    return FlightStatus.DOCKING;
+                return FlightStatus.RETURNING;
+            }
             return FlightStatus.CRUISING;
         }
 
@@ -495,6 +523,7 @@ readonly IMyBroadcastListener m_ordersListener;
                 case FlightStatus.DOCKED_READY: return "Docked Ready";
                 case FlightStatus.LAUNCHING: return "Launching";
                 case FlightStatus.RETURNING: return "Returning";
+                case FlightStatus.DOCKING: return "Docking";
                 default: 
                     return string.Format("{0}", status);
             }
